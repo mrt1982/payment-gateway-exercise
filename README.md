@@ -43,9 +43,3 @@ curl -iv 'http://localhost:8090/payment-gateway-api/payment/4b7f0f73-4a11-4791-9
 --header 'Accept: application/json' \
 --header 'Content-Type: application/json'
 ```
-
-
-## API Documentation
-For documentation openAPI is included, and it can be found under the following url: **http://localhost:8090/swagger-ui/index.html**
-
-**Feel free to change the structure of the solution, use a different library etc.**
