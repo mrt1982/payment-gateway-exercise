@@ -67,7 +67,7 @@ class PaymentGatewayServiceImplSmallTest {
   }
 
   @Test
-  void findPaymentByIdempotencyId_paymentExistsForIdempotencyId_returnPayment() {
+  void findPaymentByIdempotencyId_paymentExistsForIdempotencyKey_returnPayment() {
     //Given
     UUID idempotencyKey = UUID.randomUUID();
     Payment payment = new Payment(idempotencyKey,null,null,null);
@@ -80,7 +80,7 @@ class PaymentGatewayServiceImplSmallTest {
   }
 
   @Test
-  void findPaymentByIdempotencyId_paymentDoesNotExistsForTransactionId_returnEmptyPayment() {
+  void findPaymentByIdempotencyId_paymentDoesNotExistsForIdempotencyKey_returnEmptyPayment() {
     //Given
     UUID idempotencyKey = UUID.randomUUID();
     when(paymentsRepositoryMock.getByIdempotencyKey(idempotencyKey)).thenReturn(Optional.empty());
