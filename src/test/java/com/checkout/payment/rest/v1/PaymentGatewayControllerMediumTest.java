@@ -207,7 +207,7 @@ class PaymentGatewayControllerMediumTest extends AbstractMediumTest {
   }
 
   @Test
-  void createPayment_badGatewayCallingBank_return503()
+  void createPayment_bankReturnInvalidBadRequest_return503()
       throws JsonProcessingException {
     //Given
     String idempotencyKey = UUID.randomUUID().toString();
