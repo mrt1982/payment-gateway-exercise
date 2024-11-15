@@ -65,7 +65,7 @@ public class PaymentRequest implements Serializable {
   public String toString() {
     return "PaymentRequest{" +
         "idempotencyKey=" + idempotencyKey +
-        "cardNumber=" + cardNumber.substring(cardNumber.length() -4) +
+        "cardNumber=" + cardNumber.substring(cardNumber.length()- 4) +
         ", expiryMonth=" + expiryMonth +
         ", expiryYear=" + expiryYear +
         ", currency='" + currency + '\'' +
