@@ -35,7 +35,7 @@ import org.springframework.stereotype.Repository;
 public class SimpleInMemoryPaymentsRepository implements PaymentsRepository {
 
   private final Map<UUID, Payment> payments = new ConcurrentHashMap<>();
-  private final Map<UUID, Payment> paymentsIndexByIdempotencyKey = new ConcurrentHashMap<>();
+  private final Map<UUID, UUID> paymentsIndexByIdempotencyKey = new ConcurrentHashMap<>();
   private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
   @Override
@@ -45,16 +45,18 @@ public class SimpleInMemoryPaymentsRepository implements PaymentsRepository {
 
   @Override
   public Optional<Payment> getByIdempotencyKey(UUID idempotencyKey) {
-    return Optional.ofNullable(paymentsIndexByIdempotencyKey.get(idempotencyKey));
+    Optional<UUID> paymentIdOpt = Optional.ofNullable(paymentsIndexByIdempotencyKey.get(idempotencyKey));
+    return paymentIdOpt.map(payments::get);
   }
 
   @Override
   public Payment createPayment(Payment payment) {
     readWriteLock.writeLock().lock();
     try {
-      payment.setTransactionId(generateTransactionId());
+      UUID paymentTransactionId = generateTransactionId();
+      payment.setTransactionId(paymentTransactionId);
       payments.put(payment.getTransactionId(), payment);
-      paymentsIndexByIdempotencyKey.put(payment.getIdempotencyKey(), payment);
+      paymentsIndexByIdempotencyKey.put(payment.getIdempotencyKey(), paymentTransactionId);
       return payment;
     } finally {
       readWriteLock.writeLock().unlock();
