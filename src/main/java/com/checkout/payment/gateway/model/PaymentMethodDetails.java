@@ -5,6 +5,7 @@ import lombok.ToString;
 
 @EqualsAndHashCode
 @ToString
+//TODO: Refactor to be more polymorphic
 public class PaymentMethodDetails {
 
   private final int lastFourCardDigits;

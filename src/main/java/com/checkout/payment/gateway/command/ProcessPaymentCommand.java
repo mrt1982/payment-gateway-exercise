@@ -7,6 +7,9 @@ import java.util.UUID;
 import lombok.Getter;
 
 @Getter
+/*
+TODO: Make this class abstract. sub classes per payment method type.
+ */
 public class ProcessPaymentCommand {
   private final UUID idempotencyKey;
   private final CashAmount cashAmount;

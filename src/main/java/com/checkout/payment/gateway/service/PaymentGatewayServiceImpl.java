@@ -15,6 +15,11 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/*
+  TODO: Strategy pattern for the bank Service.
+  PaymentProcessor base on payment method type.
+  Leave idempotency check here as it uses for any payments for all payment method types
+ */
 public class PaymentGatewayServiceImpl implements PaymentGatewayService {
 
   private final PaymentsRepository paymentsRepository;

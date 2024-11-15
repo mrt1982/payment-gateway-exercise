@@ -7,6 +7,7 @@ import com.checkout.payment.gateway.model.PaymentStatus;
 import org.springframework.stereotype.Component;
 
 @Component
+//TODO: To be more polymorphic, abstract factory method. Base payment method type.
 public class PaymentFactory {
 
   public Payment createPayment(ProcessPaymentCommand processPaymentCommand, PaymentStatus status) {
