@@ -9,7 +9,7 @@ import java.time.YearMonth;
 import java.util.UUID;
 
 @Getter
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 public class CardProcessPaymentCommand extends PaymentCommand {
   private final long cardNumber;
   private final int expiryMonth;
