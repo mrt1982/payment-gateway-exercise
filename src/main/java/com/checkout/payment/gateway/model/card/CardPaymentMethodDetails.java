@@ -1,11 +1,12 @@
-package com.checkout.payment.gateway.model;
+package com.checkout.payment.gateway.model.card;
 
+import com.checkout.payment.gateway.model.PaymentMethodDetails;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 @EqualsAndHashCode
 @ToString
-public class CardPaymentMethodDetails implements ProcessPaymentMethodDetails{
+public class CardPaymentMethodDetails implements PaymentMethodDetails {
   private final int lastFourCardDigits;
   private final int expiryMonth;
   private final int expiryYear;

@@ -1,21 +1,21 @@
 package com.checkout.payment.infrastructure.persistance;
 
-import com.checkout.payment.gateway.model.CashAmount;
-import com.checkout.payment.gateway.model.Payment;
-import com.checkout.payment.gateway.model.PaymentMethodDetails;
-import com.checkout.payment.gateway.model.PaymentStatus;
-import com.checkout.payment.gateway.repository.PaymentsRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.util.Currency;
-import java.util.Optional;
-import java.util.UUID;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+
+import com.checkout.payment.gateway.model.card.CardPaymentMethodDetails;
+import com.checkout.payment.gateway.model.CashAmount;
+import com.checkout.payment.gateway.model.PaymentMethodType;
+import com.checkout.payment.gateway.model.PaymentStatus;
+import com.checkout.payment.gateway.model.Payment;
+import com.checkout.payment.gateway.repository.PaymentsRepository;
+import java.util.Currency;
+import java.util.Optional;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 class SimpleInMemoryPaymentsRepositorySmallTest {
   private PaymentsRepository testObj;
@@ -82,7 +82,7 @@ class SimpleInMemoryPaymentsRepositorySmallTest {
   }
 
   private Payment createValidPayment(UUID idempotencyKey) {
-    PaymentMethodDetails cardPaymentMethodDetails = new PaymentMethodDetails(1234, 10, 2025);
-    return new Payment(idempotencyKey, PaymentStatus.AUTHORIZED, new CashAmount(Currency.getInstance("GBP"), 150), cardPaymentMethodDetails);
+    CardPaymentMethodDetails cardPaymentMethodDetails = new CardPaymentMethodDetails(1234, 10, 2025);
+    return new Payment(idempotencyKey, PaymentStatus.AUTHORIZED, new CashAmount(Currency.getInstance("GBP"), 150), PaymentMethodType.CARD, cardPaymentMethodDetails);
   }
 }

@@ -1,8 +1,8 @@
 package com.checkout.payment.rest.v1.response;
 
-import com.checkout.payment.gateway.model.Payment;
-import com.checkout.payment.gateway.model.PaymentMethodDetails;
+import com.checkout.payment.gateway.model.card.CardPaymentMethodDetails;
 import com.checkout.payment.gateway.model.PaymentStatus;
+import com.checkout.payment.gateway.model.Payment;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,7 +22,7 @@ public class PaymentResponse {
   private int amount;
 
   public static PaymentResponse from(Payment payment) {
-    PaymentMethodDetails paymentMethodDetails = payment.getPaymentMethodDetails();
+    CardPaymentMethodDetails paymentMethodDetails = (CardPaymentMethodDetails) payment.getPaymentMethodDetails();
     return new PaymentResponse(payment.getTransactionId(),
         payment.getIdempotencyKey(),
         payment.getStatus(),
@@ -35,7 +35,7 @@ public class PaymentResponse {
 
   @Override
   public String toString() {
-    return "GetPaymentResponse{" +
+    return "PaymentResponse{" +
         "id=" + id +
         ", idempotencyKey=" + idempotencyKey +
         ", status=" + status +

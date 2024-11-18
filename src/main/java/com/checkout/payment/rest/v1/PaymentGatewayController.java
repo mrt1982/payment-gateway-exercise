@@ -2,11 +2,10 @@ package com.checkout.payment.rest.v1;
 
 import com.checkout.payment.gateway.command.CardProcessPaymentCommand;
 import com.checkout.payment.gateway.command.PaymentCommand;
-import com.checkout.payment.gateway.command.ProcessPaymentCommand;
-import com.checkout.payment.gateway.exception.ExpiredCardDateException;
+import com.checkout.payment.gateway.command.exception.ExpiredCardDateException;
 import com.checkout.payment.gateway.model.CashAmount;
-import com.checkout.payment.gateway.model.Payment;
 import com.checkout.payment.gateway.model.PaymentMethodType;
+import com.checkout.payment.gateway.model.Payment;
 import com.checkout.payment.gateway.service.PaymentGatewayService;
 import com.checkout.payment.gateway.service.exception.PaymentAlreadyProcessedException;
 import com.checkout.payment.gateway.service.exception.PaymentIncongruentServiceException;
@@ -73,10 +72,11 @@ public class PaymentGatewayController {
   }
 
   private Payment processPayment(PaymentRequest paymentRequest)
-      throws ExpiredCardDateException, PaymentAlreadyProcessedException {
+      throws PaymentAlreadyProcessedException, ExpiredCardDateException {
     return paymentGatewayService.processPayment(buildProcessPaymentCommand(paymentRequest));
   }
-  private PaymentCommand buildProcessPaymentCommand(PaymentRequest paymentRequest) {
+  private PaymentCommand buildProcessPaymentCommand(PaymentRequest paymentRequest)
+      throws ExpiredCardDateException {
     UUID idempotencyKey = UUID.fromString(paymentRequest.getIdempotencyKey());
     Currency currency = Currency.getInstance(paymentRequest.getCurrency());
     CashAmount cashAmount = new CashAmount(currency, Integer.parseInt(paymentRequest.getAmount()));

@@ -1,25 +1,18 @@
 package com.checkout.payment.gateway.factory.paymentmethod;
 
 import com.checkout.payment.gateway.command.CardProcessPaymentCommand;
-import com.checkout.payment.gateway.command.PaymentCommand;
-import com.checkout.payment.gateway.model.CardPaymentMethodDetails;
-import com.checkout.payment.gateway.model.ProcessPaymentMethodDetails;
+import com.checkout.payment.gateway.model.card.CardPaymentMethodDetails;
+import com.checkout.payment.gateway.model.PaymentMethodDetails;
 
-public class CardPaymentMethodDetailsGenerator implements PaymentMethodDetailsGenerator {
+public class CardPaymentMethodDetailsGenerator implements PaymentMethodDetailsGenerator<CardProcessPaymentCommand> {
 
   @Override
-  public ProcessPaymentMethodDetails generate(PaymentCommand processPaymentCommand) {
-    if (!(processPaymentCommand instanceof CardProcessPaymentCommand)) {
-      throw new IllegalArgumentException("Invalid payment command for card payment");
-    }
-
-    CardProcessPaymentCommand cardCommand = (CardProcessPaymentCommand) processPaymentCommand;
-    int lastFourDigits = generateLastFourDigits(cardCommand.getCardNumber());
-
+  public PaymentMethodDetails generate(CardProcessPaymentCommand cardProcessPaymentCommand) {
+    int lastFourDigits = generateLastFourDigits(cardProcessPaymentCommand.getCardNumber());
     return new CardPaymentMethodDetails(
         lastFourDigits,
-        cardCommand.getExpiryMonth(),
-        cardCommand.getExpiryYear()
+        cardProcessPaymentCommand.getExpiryMonth(),
+        cardProcessPaymentCommand.getExpiryYear()
     );
   }
   private int generateLastFourDigits(long cardNumber){

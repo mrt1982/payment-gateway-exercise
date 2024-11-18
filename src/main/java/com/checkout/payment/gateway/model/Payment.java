@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import java.util.UUID;
 
-
 @RequiredArgsConstructor
 @Getter
 @EqualsAndHashCode
@@ -16,9 +15,11 @@ public class Payment {
   private final UUID idempotencyKey;
   private final PaymentStatus status;
   private final CashAmount cashAmount;
+  private final PaymentMethodType paymentMethodType;
   private final PaymentMethodDetails paymentMethodDetails;
 
   public void setTransactionId(UUID transactionId){
     this.transactionId = transactionId;
   }
+
 }

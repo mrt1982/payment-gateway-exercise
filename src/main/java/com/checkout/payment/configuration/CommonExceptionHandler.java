@@ -1,6 +1,6 @@
 package com.checkout.payment.configuration;
 
-import com.checkout.payment.gateway.exception.ExpiredCardDateException;
+import com.checkout.payment.gateway.command.exception.ExpiredCardDateException;
 import com.checkout.payment.gateway.service.exception.BankServiceException;
 import com.checkout.payment.gateway.service.exception.InvalidBankPaymentDetailsException;
 import com.checkout.payment.gateway.service.exception.PaymentIncongruentServiceException;

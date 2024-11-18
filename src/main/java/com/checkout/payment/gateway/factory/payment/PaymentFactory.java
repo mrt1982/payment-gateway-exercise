@@ -1,28 +1,28 @@
-package com.checkout.payment.gateway.factory;
+package com.checkout.payment.gateway.factory.payment;
 
 import com.checkout.payment.gateway.command.PaymentCommand;
 import com.checkout.payment.gateway.factory.paymentmethod.PaymentMethodDetailsGenerator;
 import com.checkout.payment.gateway.factory.paymentmethod.PaymentMethodDetailsGeneratorFactory;
 import com.checkout.payment.gateway.model.PaymentStatus;
-import com.checkout.payment.gateway.model.ProcessPayment;
-import com.checkout.payment.gateway.model.ProcessPaymentMethodDetails;
+import com.checkout.payment.gateway.model.Payment;
+import com.checkout.payment.gateway.model.PaymentMethodDetails;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class ProcessPaymentFactory {
+public class PaymentFactory {
   private final PaymentMethodDetailsGeneratorFactory paymentMethodDetailsGeneratorFactory;
 
-  public ProcessPayment createPayment(PaymentCommand processPaymentCommand, PaymentStatus status) {
+  public Payment createPayment(PaymentCommand processPaymentCommand, PaymentStatus status) {
     PaymentMethodDetailsGenerator generator =
         paymentMethodDetailsGeneratorFactory.getGenerator(processPaymentCommand.getPaymentMethodType());
-    ProcessPaymentMethodDetails processPaymentMethodDetails = generator.generate(processPaymentCommand);
+    PaymentMethodDetails paymentMethodDetails = generator.generate(processPaymentCommand);
 
-    return new ProcessPayment(
+    return new Payment(
         processPaymentCommand.getIdempotencyKey(),
         status,
         processPaymentCommand.getCashAmount(),
         processPaymentCommand.getPaymentMethodType(),
-        processPaymentMethodDetails
+        paymentMethodDetails
     );
   }
 }
