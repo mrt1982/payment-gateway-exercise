@@ -40,7 +40,7 @@ curl -iv 'http://localhost:8090/payment-gateway-api/payment' \
 ```
 2. Get a Payment by Id GET: /payment-gateway-api/payment/{id}
 ```
-curl -iv 'http://localhost:8090/payment-gateway-api/payment/72ff74a1-647f-48bd-9f2d-1077589f4f8f' \
+curl -iv 'http://localhost:8090/payment-gateway-api/payment/90dccd03-dbb4-416d-a219-b09ddbb70604' \
 --header 'Accept: application/json' \
 --header 'Content-Type: application/json'
 ```
