@@ -29,6 +29,7 @@ curl -iv 'http://localhost:8090/payment-gateway-api/payment' \
 --header 'Content-Type: application/json' \
 --data '{
     "idempotencyKey": "8014726c-b503-4bae-a27e-5d6e7a2603ca",
+    "paymentMethodType": "CARD",
     "card_number": "2222405343248877",
     "expiry_month": 4,
     "expiry_year": 2025,
@@ -39,7 +40,7 @@ curl -iv 'http://localhost:8090/payment-gateway-api/payment' \
 ```
 2. Get a Payment by Id GET: /payment-gateway-api/payment/{id}
 ```
-curl -iv 'http://localhost:8090/payment-gateway-api/payment/4b7f0f73-4a11-4791-940f-833ed930b6c0' \
+curl -iv 'http://localhost:8090/payment-gateway-api/payment/72ff74a1-647f-48bd-9f2d-1077589f4f8f' \
 --header 'Accept: application/json' \
 --header 'Content-Type: application/json'
 ```
