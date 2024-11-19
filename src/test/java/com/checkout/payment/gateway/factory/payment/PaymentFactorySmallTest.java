@@ -1,7 +1,12 @@
 package com.checkout.payment.gateway.factory.payment;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.mockito.Mockito.when;
+
 import com.checkout.payment.gateway.command.CardPaymentProcessCommand;
-import com.checkout.payment.gateway.command.PaymentProcessCommand;
 import com.checkout.payment.gateway.command.exception.ExpiredCardDateException;
 import com.checkout.payment.gateway.factory.paymentmethod.CardPaymentMethodDetailsGenerator;
 import com.checkout.payment.gateway.factory.paymentmethod.PaymentMethodDetailsGeneratorFactory;
@@ -11,19 +16,13 @@ import com.checkout.payment.gateway.model.PaymentMethodDetails;
 import com.checkout.payment.gateway.model.PaymentMethodType;
 import com.checkout.payment.gateway.model.PaymentStatus;
 import com.checkout.payment.gateway.model.card.CardPaymentMethodDetails;
+import java.time.Year;
+import java.util.Currency;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import java.time.Year;
-import java.util.Currency;
-import java.util.UUID;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentFactorySmallTest {

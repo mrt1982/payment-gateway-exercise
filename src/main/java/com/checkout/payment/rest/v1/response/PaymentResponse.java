@@ -2,7 +2,6 @@ package com.checkout.payment.rest.v1.response;
 
 import com.checkout.payment.gateway.model.PaymentMethodType;
 import com.checkout.payment.gateway.model.PaymentStatus;
-import com.checkout.payment.rest.v1.request.CardPaymentRequest;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.io.Serializable;

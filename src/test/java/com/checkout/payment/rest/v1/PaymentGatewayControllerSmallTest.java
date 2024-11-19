@@ -43,11 +43,10 @@ class PaymentGatewayControllerSmallTest {
   @Mock
   private PaymentGatewayService paymentGatewayServiceMock;
   private PaymentGatewayController testObj;
-  private Validator validator;
 
   @BeforeEach
   void setUp() {
-    validator = Validation.buildDefaultValidatorFactory().getValidator();
+    Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
     testObj = new PaymentGatewayController(paymentGatewayServiceMock, validator);
   }
 
@@ -60,7 +59,8 @@ class PaymentGatewayControllerSmallTest {
     int expiryYear = 2024;
     CashAmount cashAmount = new CashAmount(Currency.getInstance("GBP"), 150);
 
-    Payment payment = createValidCardPayment(idempotencyKey, 1234, expiryMonth, expiryYear, PaymentStatus.AUTHORIZED, cashAmount);
+    Payment payment = createValidCardPayment(idempotencyKey, 1234, expiryMonth, expiryYear,
+        cashAmount);
     when(paymentGatewayServiceMock.findPaymentsByTransactionId(paymentTransactionId)).thenReturn(
         Optional.of(payment));
     //When
@@ -90,7 +90,8 @@ class PaymentGatewayControllerSmallTest {
     int expiryYear = Year.now().plusYears(1).getValue();
     CashAmount cashAmount = new CashAmount(Currency.getInstance("GBP"), 150);
 
-    Payment expectedPayment = createValidCardPayment(idempotencyKey, 1023, expiryMonth, expiryYear, PaymentStatus.AUTHORIZED, cashAmount);
+    Payment expectedPayment = createValidCardPayment(idempotencyKey, 1023, expiryMonth, expiryYear,
+        cashAmount);
     when(paymentGatewayServiceMock.processPayment(any(PaymentProcessCommand.class))).thenReturn(expectedPayment);
     PaymentRequest cardPaymentRequest = CardPaymentRequest.builder()
         .idempotencyKey(idempotencyKey.toString())
@@ -160,7 +161,8 @@ class PaymentGatewayControllerSmallTest {
     int expiryYear = Year.now().plusYears(1).getValue();
     CashAmount cashAmount = new CashAmount(Currency.getInstance("GBP"), 150);
 
-    Payment expectedCardPayment = createValidCardPayment(idempotencyKey, 1023, expiryMonth, expiryYear, PaymentStatus.AUTHORIZED, cashAmount);
+    Payment expectedCardPayment = createValidCardPayment(idempotencyKey, 1023, expiryMonth, expiryYear,
+        cashAmount);
     when(paymentGatewayServiceMock.processPayment(any(PaymentProcessCommand.class))).thenThrow(PaymentAlreadyProcessedException.class);
     when(paymentGatewayServiceMock.findPaymentByIdempotencyId(idempotencyKey)).thenReturn(Optional.of(expectedCardPayment));
     PaymentRequest paymentRequest = CardPaymentRequest.builder()
@@ -201,9 +203,10 @@ class PaymentGatewayControllerSmallTest {
     assertThrows(PaymentIncongruentServiceException.class, () -> testObj.createPayment(paymentRequest));
   }
 
-  private Payment createValidCardPayment(UUID idempotencyKey, int lastFourCardDigits, int expiryMonth, int expiryYear, PaymentStatus paymentStatus, CashAmount cashAmount) {
+  private Payment createValidCardPayment(UUID idempotencyKey, int lastFourCardDigits, int expiryMonth, int expiryYear,
+      CashAmount cashAmount) {
     CardPaymentMethodDetails paymentMethodDetails = new CardPaymentMethodDetails(lastFourCardDigits, expiryMonth, expiryYear);
-    return new Payment(idempotencyKey, paymentStatus, cashAmount, PaymentMethodType.CARD, paymentMethodDetails);
+    return new Payment(idempotencyKey, PaymentStatus.AUTHORIZED, cashAmount, PaymentMethodType.CARD, paymentMethodDetails);
   }
 
   private static Stream<Arguments> invalidTypeFieldsForACardPaymentRequest() {
