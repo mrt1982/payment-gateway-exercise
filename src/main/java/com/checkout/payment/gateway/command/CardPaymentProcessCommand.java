@@ -1,28 +1,25 @@
 package com.checkout.payment.gateway.command;
 
-import com.checkout.payment.gateway.exception.ExpiredCardDateException;
+import com.checkout.payment.gateway.command.exception.ExpiredCardDateException;
 import com.checkout.payment.gateway.model.CashAmount;
+import com.checkout.payment.gateway.model.PaymentMethodType;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import java.time.YearMonth;
 import java.util.UUID;
-import lombok.Getter;
 
 @Getter
-/*
-TODO: Make this class abstract. sub classes per payment method type.
- */
-public class ProcessPaymentCommand {
-  private final UUID idempotencyKey;
-  private final CashAmount cashAmount;
+@EqualsAndHashCode(callSuper = true)
+public class CardPaymentProcessCommand extends PaymentProcessCommand {
   private final long cardNumber;
   private final int expiryMonth;
   private final int expiryYear;
   private final int cvv;
 
-  public ProcessPaymentCommand(UUID idempotencyKey, CashAmount cashAmount,
-      long cardNumber, int expiryMonth, int expiryYear, int cvv) throws ExpiredCardDateException {
+  public CardPaymentProcessCommand(UUID idempotencyKey, CashAmount cashAmount, PaymentMethodType paymentMethodType, long cardNumber,
+                                          int expiryMonth, int expiryYear, int cvv) throws ExpiredCardDateException {
+    super(idempotencyKey, cashAmount, paymentMethodType);
     validateExpiryDate(expiryYear, expiryMonth);
-    this.idempotencyKey = idempotencyKey;
-    this.cashAmount = cashAmount;
     this.cardNumber = cardNumber;
     this.expiryMonth = expiryMonth;
     this.expiryYear = expiryYear;
@@ -35,5 +32,4 @@ public class ProcessPaymentCommand {
       throw new ExpiredCardDateException("Expiry date must be in the future");
     }
   }
-
 }

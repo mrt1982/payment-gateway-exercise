@@ -1,9 +1,8 @@
 package com.checkout.payment.gateway.service;
 
-import com.checkout.payment.gateway.command.ProcessPaymentCommand;
-import com.checkout.payment.gateway.factory.PaymentFactory;
+import com.checkout.payment.gateway.command.PaymentProcessCommand;
+import com.checkout.payment.gateway.factory.paymentprocessor.PaymentProcessorFactory;
 import com.checkout.payment.gateway.model.Payment;
-import com.checkout.payment.gateway.model.PaymentStatus;
 import com.checkout.payment.gateway.repository.PaymentsRepository;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,8 +22,7 @@ import org.springframework.stereotype.Service;
 public class PaymentGatewayServiceImpl implements PaymentGatewayService {
 
   private final PaymentsRepository paymentsRepository;
-  private final PaymentFactory paymentFactory;
-  private final BankService bankService;
+  private final PaymentProcessorFactory paymentProcessorFactory;
 
   @Override
   public Optional<Payment> findPaymentsByTransactionId(UUID transactionId) {
@@ -38,12 +36,12 @@ public class PaymentGatewayServiceImpl implements PaymentGatewayService {
   }
 
   @Override
-  public Payment processPayment(ProcessPaymentCommand command)
+  public Payment processPayment(PaymentProcessCommand paymentProcessCommand)
       throws PaymentAlreadyProcessedException {
-    checkForIdempotency(command.getIdempotencyKey());
-    PaymentStatus authorisationStatus = bankService.authorisePayment(command.getCardNumber(), command.getExpiryMonth(), command.getExpiryYear(), command.getCashAmount(), command.getCvv());
-    Payment payment = paymentFactory.createPayment(command, authorisationStatus);
-    return paymentsRepository.createPayment(payment);
+    checkForIdempotency(paymentProcessCommand.getIdempotencyKey());
+    PaymentProcessor<PaymentProcessCommand> paymentProcessor = getPaymentProcessor(
+        paymentProcessCommand);
+    return paymentProcessor.processPayment(paymentProcessCommand);
   }
 
   private void checkForIdempotency(UUID idempotencyKey) throws PaymentAlreadyProcessedException {
@@ -51,4 +49,15 @@ public class PaymentGatewayServiceImpl implements PaymentGatewayService {
       throw new PaymentAlreadyProcessedException("Payment has already been processed.");
     }
   }
+
+  PaymentProcessor<PaymentProcessCommand> getPaymentProcessor(
+      PaymentProcessCommand paymentProcessCommand){
+    PaymentProcessor<PaymentProcessCommand> processor = paymentProcessorFactory.getProcessor(
+        paymentProcessCommand.getPaymentMethodType());
+    if (processor == null) {
+      throw new IllegalArgumentException("No processor found for payment method type: " + paymentProcessCommand.getPaymentMethodType().name());
+    }
+    return processor;
+  }
+
 }

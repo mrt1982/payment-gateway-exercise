@@ -7,15 +7,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import com.checkout.payment.gateway.command.ProcessPaymentCommand;
-import com.checkout.payment.gateway.exception.ExpiredCardDateException;
+import com.checkout.payment.gateway.command.PaymentProcessCommand;
+import com.checkout.payment.gateway.command.exception.ExpiredCardDateException;
+import com.checkout.payment.gateway.model.card.CardPaymentMethodDetails;
 import com.checkout.payment.gateway.model.CashAmount;
-import com.checkout.payment.gateway.model.Payment;
-import com.checkout.payment.gateway.model.PaymentMethodDetails;
+import com.checkout.payment.gateway.model.PaymentMethodType;
 import com.checkout.payment.gateway.model.PaymentStatus;
+import com.checkout.payment.gateway.model.Payment;
 import com.checkout.payment.gateway.service.PaymentGatewayService;
 import com.checkout.payment.gateway.service.exception.PaymentAlreadyProcessedException;
 import com.checkout.payment.gateway.service.exception.PaymentIncongruentServiceException;
+import com.checkout.payment.rest.v1.request.CardPaymentRequest;
 import com.checkout.payment.rest.v1.request.PaymentRequest;
 import com.checkout.payment.rest.v1.response.PaymentResponse;
 import jakarta.validation.ConstraintViolationException;
@@ -41,16 +43,15 @@ class PaymentGatewayControllerSmallTest {
   @Mock
   private PaymentGatewayService paymentGatewayServiceMock;
   private PaymentGatewayController testObj;
-  private Validator validator;
 
   @BeforeEach
   void setUp() {
-    validator = Validation.buildDefaultValidatorFactory().getValidator();
+    Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
     testObj = new PaymentGatewayController(paymentGatewayServiceMock, validator);
   }
 
   @Test
-  void getPaymentById_paymentExist_returnOk200() {
+  void getPaymentById_cardPaymentExist_returnOk200() {
     //Given
     UUID paymentTransactionId = UUID.randomUUID();
     UUID idempotencyKey = UUID.randomUUID();
@@ -58,7 +59,8 @@ class PaymentGatewayControllerSmallTest {
     int expiryYear = 2024;
     CashAmount cashAmount = new CashAmount(Currency.getInstance("GBP"), 150);
 
-    Payment payment = createValidPayment(idempotencyKey, 1234, expiryMonth, expiryYear, PaymentStatus.AUTHORIZED, cashAmount);
+    Payment payment = createValidCardPayment(idempotencyKey, 1234, expiryMonth, expiryYear,
+        cashAmount);
     when(paymentGatewayServiceMock.findPaymentsByTransactionId(paymentTransactionId)).thenReturn(
         Optional.of(payment));
     //When
@@ -68,7 +70,7 @@ class PaymentGatewayControllerSmallTest {
   }
 
   @Test
-  void getPaymentById_paymentDoesNotExist_returnNotFound404() {
+  void getPaymentById_cardPaymentDoesNotExist_returnNotFound404() {
     //Given
     UUID paymentTransactionId = UUID.randomUUID();
     when(paymentGatewayServiceMock.findPaymentsByTransactionId(paymentTransactionId)).thenReturn(
@@ -80,18 +82,20 @@ class PaymentGatewayControllerSmallTest {
   }
 
   @Test
-  void createPayment_validPaymentRequest_returnOk201()
-      throws ExpiredCardDateException, PaymentAlreadyProcessedException {
+  void createPayment_validCardPaymentRequest_returnOk201()
+      throws PaymentAlreadyProcessedException, ExpiredCardDateException {
     //Given
     UUID idempotencyKey = UUID.randomUUID();
     int expiryMonth = 10;
     int expiryYear = Year.now().plusYears(1).getValue();
     CashAmount cashAmount = new CashAmount(Currency.getInstance("GBP"), 150);
 
-    Payment expectedPayment = createValidPayment(idempotencyKey, 1023, expiryMonth, expiryYear, PaymentStatus.AUTHORIZED, cashAmount);
-    when(paymentGatewayServiceMock.processPayment(any(ProcessPaymentCommand.class))).thenReturn(expectedPayment);
-    PaymentRequest paymentRequest = PaymentRequest.builder()
+    Payment expectedPayment = createValidCardPayment(idempotencyKey, 1023, expiryMonth, expiryYear,
+        cashAmount);
+    when(paymentGatewayServiceMock.processPayment(any(PaymentProcessCommand.class))).thenReturn(expectedPayment);
+    PaymentRequest cardPaymentRequest = CardPaymentRequest.builder()
         .idempotencyKey(idempotencyKey.toString())
+        .paymentMethodType("CARD")
         .cardNumber("12345678911023")
         .expiryMonth(expiryMonth)
         .expiryYear(expiryYear)
@@ -99,44 +103,45 @@ class PaymentGatewayControllerSmallTest {
         .amount(String.valueOf(cashAmount.getMinorAmount()))
         .cvv("500").build();
     //When
-    ResponseEntity<PaymentResponse> actualPaymentResponse = testObj.createPayment(paymentRequest);
+    ResponseEntity<PaymentResponse> actualPaymentResponse = testObj.createPayment(cardPaymentRequest);
     //Then
     assertThat(actualPaymentResponse.getStatusCode().value(), is(equalTo(201)));
   }
 
   @ParameterizedTest
-  @MethodSource("missingRequiredFieldsForPaymentRequests")
-  void createPayment_missingRequiredFieldsForAPaymentRequest_ThrowConstraintViolationException(
+  @MethodSource("missingRequiredFieldsForCardPaymentRequests")
+  void createPayment_missingRequiredFieldsForACardPaymentRequest_ThrowConstraintViolationException(
       PaymentRequest paymentRequest) {
     //Given & When & Then
     assertThrows(ConstraintViolationException.class, () -> testObj.createPayment(paymentRequest));
   }
 
   @ParameterizedTest
-  @MethodSource("invalidSizeFieldsForAPaymentRequest")
-  void createPayment_invalidSizeFieldsForAPaymentRequest_ThrowConstraintViolationException(
+  @MethodSource("invalidSizeFieldsForACardPaymentRequest")
+  void createPayment_invalidSizeFieldsForACardPaymentRequest_ThrowConstraintViolationException(
       PaymentRequest paymentRequest) {
     //Given & When & Then
     assertThrows(ConstraintViolationException.class, () -> testObj.createPayment(paymentRequest));
   }
 
   @ParameterizedTest
-  @MethodSource("invalidTypeFieldsForAPaymentRequest")
-  void createPayment_invalidTypeFieldsForAPaymentRequest_ThrowConstraintViolationException(
+  @MethodSource("invalidTypeFieldsForACardPaymentRequest")
+  void createPayment_invalidTypeFieldsForACardPaymentRequest_ThrowConstraintViolationException(
       PaymentRequest paymentRequest) {
     //Given & When & Then
     assertThrows(ConstraintViolationException.class, () -> testObj.createPayment(paymentRequest));
   }
 
   @Test
-  void createPayment_expiredDate_throwExpiredCardDateException() {
+  void createCardPayment_expiredDate_throwExpiredCardDateException() {
     //Given
     UUID idempotencyKey = UUID.randomUUID();
     int expiryMonth = 10;
     int expiryYear = Year.now().minusYears(1).getValue();
     CashAmount cashAmount = new CashAmount(Currency.getInstance("GBP"), 150);
-    PaymentRequest paymentRequest = PaymentRequest.builder()
+    PaymentRequest paymentRequest = CardPaymentRequest.builder()
         .idempotencyKey(idempotencyKey.toString())
+        .paymentMethodType("CARD")
         .cardNumber("12345678911023")
         .expiryMonth(expiryMonth)
         .expiryYear(expiryYear)
@@ -148,19 +153,21 @@ class PaymentGatewayControllerSmallTest {
   }
 
   @Test
-  void createPayment_paymentAlreadyProcessed_returnOk200()
-      throws ExpiredCardDateException, PaymentAlreadyProcessedException {
+  void createPayment_cardPaymentAlreadyProcessed_returnOk200()
+      throws PaymentAlreadyProcessedException, ExpiredCardDateException {
     //Given
     UUID idempotencyKey = UUID.randomUUID();
     int expiryMonth = 10;
     int expiryYear = Year.now().plusYears(1).getValue();
     CashAmount cashAmount = new CashAmount(Currency.getInstance("GBP"), 150);
 
-    Payment expectedPayment = createValidPayment(idempotencyKey, 1023, expiryMonth, expiryYear, PaymentStatus.AUTHORIZED, cashAmount);
-    when(paymentGatewayServiceMock.processPayment(any(ProcessPaymentCommand.class))).thenThrow(PaymentAlreadyProcessedException.class);
-    when(paymentGatewayServiceMock.findPaymentByIdempotencyId(idempotencyKey)).thenReturn(Optional.of(expectedPayment));
-    PaymentRequest paymentRequest = PaymentRequest.builder()
+    Payment expectedCardPayment = createValidCardPayment(idempotencyKey, 1023, expiryMonth, expiryYear,
+        cashAmount);
+    when(paymentGatewayServiceMock.processPayment(any(PaymentProcessCommand.class))).thenThrow(PaymentAlreadyProcessedException.class);
+    when(paymentGatewayServiceMock.findPaymentByIdempotencyId(idempotencyKey)).thenReturn(Optional.of(expectedCardPayment));
+    PaymentRequest paymentRequest = CardPaymentRequest.builder()
         .idempotencyKey(idempotencyKey.toString())
+        .paymentMethodType("CARD")
         .cardNumber("12345678911023")
         .expiryMonth(expiryMonth)
         .expiryYear(expiryYear)
@@ -174,7 +181,7 @@ class PaymentGatewayControllerSmallTest {
   }
 
   @Test
-  void createPayment_incongruentPaymentAlreadyProcessed_throwPaymentIncongruentServiceException()
+  void createPayment_incongruentCardPaymentAlreadyProcessed_throwPaymentIncongruentServiceException()
       throws PaymentAlreadyProcessedException {
     //Given
     UUID idempotencyKey = UUID.randomUUID();
@@ -182,9 +189,10 @@ class PaymentGatewayControllerSmallTest {
     int expiryYear = Year.now().plusYears(1).getValue();
     CashAmount cashAmount = new CashAmount(Currency.getInstance("GBP"), 150);
 
-    when(paymentGatewayServiceMock.processPayment(any(ProcessPaymentCommand.class))).thenThrow(PaymentAlreadyProcessedException.class);
-    PaymentRequest paymentRequest = PaymentRequest.builder()
+    when(paymentGatewayServiceMock.processPayment(any(PaymentProcessCommand.class))).thenThrow(PaymentAlreadyProcessedException.class);
+    PaymentRequest paymentRequest = CardPaymentRequest.builder()
         .idempotencyKey(idempotencyKey.toString())
+        .paymentMethodType("CARD")
         .cardNumber("12345678911023")
         .expiryMonth(expiryMonth)
         .expiryYear(expiryYear)
@@ -195,15 +203,17 @@ class PaymentGatewayControllerSmallTest {
     assertThrows(PaymentIncongruentServiceException.class, () -> testObj.createPayment(paymentRequest));
   }
 
-  private Payment createValidPayment(UUID idempotencyKey, int lastFourCardDigits, int expiryMonth, int expiryYear, PaymentStatus paymentStatus, CashAmount cashAmount) {
-    PaymentMethodDetails paymentMethodDetails = new PaymentMethodDetails(lastFourCardDigits, expiryMonth, expiryYear);
-    return new Payment(idempotencyKey, paymentStatus, cashAmount, paymentMethodDetails);
+  private Payment createValidCardPayment(UUID idempotencyKey, int lastFourCardDigits, int expiryMonth, int expiryYear,
+      CashAmount cashAmount) {
+    CardPaymentMethodDetails paymentMethodDetails = new CardPaymentMethodDetails(lastFourCardDigits, expiryMonth, expiryYear);
+    return new Payment(idempotencyKey, PaymentStatus.AUTHORIZED, cashAmount, PaymentMethodType.CARD, paymentMethodDetails);
   }
 
-  private static Stream<Arguments> invalidTypeFieldsForAPaymentRequest() {
+  private static Stream<Arguments> invalidTypeFieldsForACardPaymentRequest() {
     return Stream.of(
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey("1234")
+            .paymentMethodType("CARD")
             .cardNumber("12345678912345")
             .expiryMonth(10)
             .expiryYear(2024)
@@ -211,8 +221,19 @@ class PaymentGatewayControllerSmallTest {
             .amount("150")
             .cvv("500")
             .build()),
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARDSSSX")
+            .cardNumber("12345678912345")
+            .expiryMonth(10)
+            .expiryYear(2024)
+            .currency("GBP")
+            .amount("150")
+            .cvv("500")
+            .build()),
+        Arguments.of(CardPaymentRequest.builder()
+            .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
             .cardNumber("12345678910234x")
             .expiryMonth(10)
             .expiryYear(2024)
@@ -220,8 +241,9 @@ class PaymentGatewayControllerSmallTest {
             .amount("150")
             .cvv("500")
             .build()),
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
             .cardNumber("12345678910234")
             .expiryMonth(10)
             .expiryYear(2024)
@@ -229,8 +251,9 @@ class PaymentGatewayControllerSmallTest {
             .amount("1500")
             .cvv("500")
             .build()),
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
             .cardNumber("12345678910234")
             .expiryMonth(10)
             .expiryYear(2024)
@@ -238,8 +261,9 @@ class PaymentGatewayControllerSmallTest {
             .amount("150.0")
             .cvv("500")
             .build()),
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
             .cardNumber("123456789012345")
             .expiryMonth(10)
             .expiryYear(2024)
@@ -248,10 +272,11 @@ class PaymentGatewayControllerSmallTest {
             .cvv("500x")
             .build()));
   }
-  private static Stream<Arguments> invalidSizeFieldsForAPaymentRequest() {
+  private static Stream<Arguments> invalidSizeFieldsForACardPaymentRequest() {
     return Stream.of(
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
             .cardNumber("123456789012")
             .expiryMonth(10)
             .expiryYear(2024)
@@ -259,8 +284,9 @@ class PaymentGatewayControllerSmallTest {
             .amount("150")
             .cvv("500")
             .build()),
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
             .cardNumber("12345678912345678901")
             .expiryMonth(10)
             .expiryYear(2024)
@@ -268,8 +294,9 @@ class PaymentGatewayControllerSmallTest {
             .amount("150")
             .cvv("500")
             .build()),
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
             .cardNumber("123456789012345")
             .expiryMonth(13)
             .expiryYear(2024)
@@ -277,8 +304,9 @@ class PaymentGatewayControllerSmallTest {
             .amount("150")
             .cvv("500")
             .build()),
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
             .cardNumber("123456789012345")
             .expiryMonth(10)
             .expiryYear(20245)
@@ -286,8 +314,9 @@ class PaymentGatewayControllerSmallTest {
             .amount("150")
             .cvv("500")
             .build()),
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
             .cardNumber("123456789012345")
             .expiryMonth(10)
             .expiryYear(2024)
@@ -295,8 +324,9 @@ class PaymentGatewayControllerSmallTest {
             .amount("150")
             .cvv("500")
             .build()),
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
             .cardNumber("123456789012345")
             .expiryMonth(10)
             .expiryYear(2024)
@@ -304,8 +334,9 @@ class PaymentGatewayControllerSmallTest {
             .amount("150")
             .cvv("50")
             .build()),
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
             .cardNumber("123456789012345")
             .expiryMonth(10)
             .expiryYear(2024)
@@ -315,9 +346,10 @@ class PaymentGatewayControllerSmallTest {
             .build()));
   }
 
-  private static Stream<Arguments> missingRequiredFieldsForPaymentRequests() {
+  private static Stream<Arguments> missingRequiredFieldsForCardPaymentRequests() {
     return Stream.of(
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
+            .paymentMethodType("CARD")
             .cardNumber("12345678912345")
             .expiryMonth(10)
             .expiryYear(2024)
@@ -325,7 +357,7 @@ class PaymentGatewayControllerSmallTest {
             .amount("150")
             .cvv("500")
             .build()),
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
             .expiryMonth(10)
             .expiryYear(2024)
@@ -333,32 +365,45 @@ class PaymentGatewayControllerSmallTest {
             .amount("150")
             .cvv("500")
             .build()),
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
+            .expiryMonth(10)
+            .expiryYear(2024)
+            .currency("GBP")
+            .amount("150")
+            .cvv("500")
+            .build()),
+        Arguments.of(CardPaymentRequest.builder()
+            .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
             .cardNumber("12345678912345")
             .expiryYear(2024)
             .currency("GBP")
             .amount("150")
             .cvv("500")
             .build()),
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
             .cardNumber("12345678912345")
             .expiryMonth(10)
             .currency("GBP")
             .amount("150")
             .cvv("500")
             .build()),
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
             .cardNumber("12345678912345")
             .expiryMonth(10)
             .expiryYear(2024)
             .amount("150")
             .cvv("500")
             .build()),
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
             .cardNumber("12345678912345")
             .expiryMonth(10)
             .expiryYear(2024)
@@ -366,16 +411,18 @@ class PaymentGatewayControllerSmallTest {
             .amount("150")
             .cvv("500")
             .build()),
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
             .cardNumber("12345678912345")
             .expiryMonth(10)
             .expiryYear(2024)
             .currency("GBP")
             .cvv("500")
             .build()),
-        Arguments.of(PaymentRequest.builder()
+        Arguments.of(CardPaymentRequest.builder()
             .idempotencyKey(UUID.randomUUID().toString())
+            .paymentMethodType("CARD")
             .cardNumber("12345678912345")
             .expiryMonth(10)
             .expiryYear(2024)

@@ -1,4 +1,4 @@
-package com.checkout.payment.gateway.exception;
+package com.checkout.payment.gateway.command.exception;
 
 public class ExpiredCardDateException extends Exception {
 
