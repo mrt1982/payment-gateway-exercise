@@ -1,6 +1,6 @@
 package com.checkout.payment.gateway.service;
 
-import com.checkout.payment.gateway.command.PaymentCommand;
+import com.checkout.payment.gateway.command.PaymentProcessCommand;
 import com.checkout.payment.gateway.factory.paymentprocessor.PaymentProcessorFactory;
 import com.checkout.payment.gateway.model.Payment;
 import com.checkout.payment.gateway.repository.PaymentsRepository;
@@ -36,11 +36,12 @@ public class PaymentGatewayServiceImpl implements PaymentGatewayService {
   }
 
   @Override
-  public Payment processPayment(PaymentCommand paymentCommand)
+  public Payment processPayment(PaymentProcessCommand paymentProcessCommand)
       throws PaymentAlreadyProcessedException {
-    checkForIdempotency(paymentCommand.getIdempotencyKey());
-    PaymentProcessor<PaymentCommand> paymentProcessor = getPaymentProcessor(paymentCommand);
-    return paymentProcessor.processPayment(paymentCommand);
+    checkForIdempotency(paymentProcessCommand.getIdempotencyKey());
+    PaymentProcessor<PaymentProcessCommand> paymentProcessor = getPaymentProcessor(
+        paymentProcessCommand);
+    return paymentProcessor.processPayment(paymentProcessCommand);
   }
 
   private void checkForIdempotency(UUID idempotencyKey) throws PaymentAlreadyProcessedException {
@@ -49,10 +50,12 @@ public class PaymentGatewayServiceImpl implements PaymentGatewayService {
     }
   }
 
-  PaymentProcessor<PaymentCommand> getPaymentProcessor(PaymentCommand paymentCommand){
-    PaymentProcessor<PaymentCommand> processor = paymentProcessorFactory.getProcessor(paymentCommand.getPaymentMethodType());
+  PaymentProcessor<PaymentProcessCommand> getPaymentProcessor(
+      PaymentProcessCommand paymentProcessCommand){
+    PaymentProcessor<PaymentProcessCommand> processor = paymentProcessorFactory.getProcessor(
+        paymentProcessCommand.getPaymentMethodType());
     if (processor == null) {
-      throw new IllegalArgumentException("No processor found for payment method type: " + paymentCommand.getPaymentMethodType().getName());
+      throw new IllegalArgumentException("No processor found for payment method type: " + paymentProcessCommand.getPaymentMethodType().name());
     }
     return processor;
   }

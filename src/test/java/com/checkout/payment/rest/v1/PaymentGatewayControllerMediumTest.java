@@ -8,12 +8,15 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 import com.checkout.payment.AbstractMediumTest;
 import com.checkout.payment.gateway.model.PaymentStatus;
+import com.checkout.payment.rest.v1.request.CardPaymentRequest;
 import com.checkout.payment.rest.v1.request.PaymentRequest;
+import com.checkout.payment.rest.v1.response.CardPaymentResponse;
 import com.checkout.payment.rest.v1.response.PaymentResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.response.Response;
@@ -26,15 +29,17 @@ import org.junit.jupiter.api.Test;
 class PaymentGatewayControllerMediumTest extends AbstractMediumTest {
 
   @Test
-  void createPayment_validPaymentRequest_returnPaymentResponseWith201()
+  void createPayment_validCardPaymentRequest_returnCardPaymentResponseWith201()
       throws JsonProcessingException, JSONException {
     //Given
     setUpAuthorisedBankResponse(201, "bank-api-card-payment-authorised-response.json");
-    PaymentRequest paymentRequest = PaymentRequest.builder()
+    int expiryYear = Year.now().plusYears(1).getValue();
+    PaymentRequest paymentRequest = CardPaymentRequest.builder()
         .idempotencyKey(UUID.randomUUID().toString())
+        .paymentMethodType("CARD")
         .cardNumber("12345678912345")
         .expiryMonth(10)
-        .expiryYear(Year.now().plusYears(1).getValue())
+        .expiryYear(expiryYear)
         .currency("GBP")
         .amount("150")
         .cvv("500").build();
@@ -53,15 +58,21 @@ class PaymentGatewayControllerMediumTest extends AbstractMediumTest {
         PaymentResponse.class);
     assertThat(actualPaymentResponse, is(notNullValue()));
     assertThat(actualPaymentResponse.getStatus(), is(equalTo(PaymentStatus.AUTHORIZED)));
+    assertThat(actualPaymentResponse, instanceOf(CardPaymentResponse.class));
+    CardPaymentResponse actualCardPaymentResponse = (CardPaymentResponse) actualPaymentResponse;
+    assertThat(actualCardPaymentResponse.getCardNumberLastFour(), is(equalTo(2345)));
+    assertThat(actualCardPaymentResponse.getExpiryMonth(), is(equalTo(10)));
+    assertThat(actualCardPaymentResponse.getExpiryYear(), is(equalTo(expiryYear)));
   }
 
   @Test
-  void createPayment_paymentRequestWithUnauthorisedBankDetails_returnPaymentResponseWith201()
+  void createPayment_cardPaymentRequestWithUnauthorisedBankDetails_returnPaymentResponseWith201()
       throws JsonProcessingException, JSONException {
     //Given
     setUpAuthorisedBankResponse(201, "bank-api-card-payment-not-authorised-response.json");
-    PaymentRequest paymentRequest = PaymentRequest.builder()
+    PaymentRequest paymentRequest = CardPaymentRequest.builder()
         .idempotencyKey(UUID.randomUUID().toString())
+        .paymentMethodType("CARD")
         .cardNumber("12345678912345")
         .expiryMonth(10)
         .expiryYear(Year.now().plusYears(1).getValue())
@@ -89,8 +100,9 @@ class PaymentGatewayControllerMediumTest extends AbstractMediumTest {
   void createPayment_missingCardNumber_return400AndRequiredCardNumberErrorCode()
       throws JsonProcessingException {
     //Given
-    PaymentRequest paymentRequest = PaymentRequest.builder()
+    PaymentRequest paymentRequest = CardPaymentRequest.builder()
         .idempotencyKey(UUID.randomUUID().toString())
+        .paymentMethodType("CARD")
         .expiryMonth(10)
         .expiryYear(Year.now().plusYears(1).getValue())
         .currency("GBP")
@@ -115,8 +127,9 @@ class PaymentGatewayControllerMediumTest extends AbstractMediumTest {
   void createPayment_cardExpiryDateExpired_return400AndCardExpiredErrorCode()
       throws JsonProcessingException {
     //Given
-    PaymentRequest paymentRequest = PaymentRequest.builder()
+    PaymentRequest paymentRequest = CardPaymentRequest.builder()
         .idempotencyKey(UUID.randomUUID().toString())
+        .paymentMethodType("CARD")
         .cardNumber("12345678912345")
         .expiryMonth(10)
         .expiryYear(Year.now().minusYears(1).getValue())
@@ -138,16 +151,18 @@ class PaymentGatewayControllerMediumTest extends AbstractMediumTest {
   }
 
   @Test
-  void createPayment_processSamePaymentMoreThanOnce_returnPaymentResponseWith200()
+  void createPayment_processSameCardPaymentMoreThanOnce_returnPaymentResponseWith200()
       throws JsonProcessingException, JSONException {
     //Given
     String idempotencyKey = UUID.randomUUID().toString();
     setUpAuthorisedBankResponse(201, "bank-api-card-payment-authorised-response.json");
-    PaymentRequest paymentRequest = PaymentRequest.builder()
+    int expiryYear = Year.now().plusYears(1).getValue();
+    PaymentRequest paymentRequest = CardPaymentRequest.builder()
         .idempotencyKey(idempotencyKey)
+        .paymentMethodType("CARD")
         .cardNumber("12345678912345")
         .expiryMonth(10)
-        .expiryYear(Year.now().plusYears(1).getValue())
+        .expiryYear(expiryYear)
         .currency("GBP")
         .amount("150")
         .cvv("500").build();
@@ -175,6 +190,11 @@ class PaymentGatewayControllerMediumTest extends AbstractMediumTest {
     assertThat(actualPaymentResponse, is(notNullValue()));
     assertThat(actualPaymentResponse.getStatus(), is(equalTo(PaymentStatus.AUTHORIZED)));
     assertThat(idempotencyKey, is(equalTo(actualPaymentResponse.getIdempotencyKey().toString())));
+    assertThat(actualPaymentResponse, instanceOf(CardPaymentResponse.class));
+    CardPaymentResponse actualCardPaymentResponse = (CardPaymentResponse) actualPaymentResponse;
+    assertThat(actualCardPaymentResponse.getCardNumberLastFour(), is(equalTo(2345)));
+    assertThat(actualCardPaymentResponse.getExpiryMonth(), is(equalTo(10)));
+    assertThat(actualCardPaymentResponse.getExpiryYear(), is(equalTo(expiryYear)));
   }
 
   @Test
@@ -184,8 +204,9 @@ class PaymentGatewayControllerMediumTest extends AbstractMediumTest {
     String idempotencyKey = UUID.randomUUID().toString();
     setUpAuthorisedBankResponse(502, "bank-api-card-payment-authorised-response.json");
     //When & Then
-    PaymentRequest paymentRequest = PaymentRequest.builder()
+    PaymentRequest paymentRequest = CardPaymentRequest.builder()
         .idempotencyKey(idempotencyKey)
+        .paymentMethodType("CARD")
         .cardNumber("12345678912345")
         .expiryMonth(10)
         .expiryYear(Year.now().plusYears(1).getValue())
@@ -213,8 +234,9 @@ class PaymentGatewayControllerMediumTest extends AbstractMediumTest {
     String idempotencyKey = UUID.randomUUID().toString();
     setUpAuthorisedBankResponse(400, "bank-api-card-payment-authorised-response.json");
     //When & Then
-    PaymentRequest paymentRequest = PaymentRequest.builder()
+    PaymentRequest paymentRequest = CardPaymentRequest.builder()
         .idempotencyKey(idempotencyKey)
+        .paymentMethodType("CARD")
         .cardNumber("12345678912345")
         .expiryMonth(10)
         .expiryYear(Year.now().plusYears(1).getValue())
@@ -240,8 +262,9 @@ class PaymentGatewayControllerMediumTest extends AbstractMediumTest {
     // Given
     String idempotencyKey = UUID.randomUUID().toString();
     setUpAuthorisedBankResponse(201, "bank-api-card-payment-authorised-response.json");
-    PaymentRequest paymentRequest = PaymentRequest.builder()
+    PaymentRequest paymentRequest = CardPaymentRequest.builder()
         .idempotencyKey(idempotencyKey)
+        .paymentMethodType("CARD")
         .cardNumber("12345678912345")
         .expiryMonth(10)
         .expiryYear(Year.now().plusYears(1).getValue())

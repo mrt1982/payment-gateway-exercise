@@ -1,6 +1,6 @@
 package com.checkout.payment.configuration;
 
-import com.checkout.payment.gateway.command.PaymentCommand;
+import com.checkout.payment.gateway.command.PaymentProcessCommand;
 import com.checkout.payment.gateway.factory.payment.PaymentFactory;
 import com.checkout.payment.gateway.factory.paymentmethod.PaymentMethodDetailsGeneratorFactory;
 import com.checkout.payment.gateway.factory.paymentprocessor.PaymentProcessorFactory;
@@ -67,13 +67,13 @@ public class ApplicationConfiguration {
 
   @Bean
   PaymentProcessorFactory paymentProcessorFactory(
-      Map<PaymentMethodType, PaymentProcessor<? extends PaymentCommand>> paymentProcessors){
+      Map<PaymentMethodType, PaymentProcessor<? extends PaymentProcessCommand>> paymentProcessors){
     return new PaymentProcessorFactory(paymentProcessors);
   }
 
   @Bean
-  Map<PaymentMethodType, PaymentProcessor<? extends PaymentCommand>> paymentProcessors(BankService bankService){
-    Map<PaymentMethodType, PaymentProcessor<? extends PaymentCommand>> paymentProcessors = new HashMap<>();
+  Map<PaymentMethodType, PaymentProcessor<? extends PaymentProcessCommand>> paymentProcessors(BankService bankService){
+    Map<PaymentMethodType, PaymentProcessor<? extends PaymentProcessCommand>> paymentProcessors = new HashMap<>();
     paymentProcessors.put(PaymentMethodType.CARD, new CardPaymentProcessor(paymentsRepository(), processPaymentFactory(), bankService));
     return paymentProcessors;
   }

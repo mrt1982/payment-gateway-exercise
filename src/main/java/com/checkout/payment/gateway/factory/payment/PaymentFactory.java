@@ -1,6 +1,6 @@
 package com.checkout.payment.gateway.factory.payment;
 
-import com.checkout.payment.gateway.command.PaymentCommand;
+import com.checkout.payment.gateway.command.PaymentProcessCommand;
 import com.checkout.payment.gateway.factory.paymentmethod.PaymentMethodDetailsGenerator;
 import com.checkout.payment.gateway.factory.paymentmethod.PaymentMethodDetailsGeneratorFactory;
 import com.checkout.payment.gateway.model.PaymentStatus;
@@ -12,16 +12,16 @@ import lombok.RequiredArgsConstructor;
 public class PaymentFactory {
   private final PaymentMethodDetailsGeneratorFactory paymentMethodDetailsGeneratorFactory;
 
-  public Payment createPayment(PaymentCommand processPaymentCommand, PaymentStatus status) {
+  public Payment createPayment(PaymentProcessCommand processPaymentProcessCommand, PaymentStatus status) {
     PaymentMethodDetailsGenerator generator =
-        paymentMethodDetailsGeneratorFactory.getGenerator(processPaymentCommand.getPaymentMethodType());
-    PaymentMethodDetails paymentMethodDetails = generator.generate(processPaymentCommand);
+        paymentMethodDetailsGeneratorFactory.getGenerator(processPaymentProcessCommand.getPaymentMethodType());
+    PaymentMethodDetails paymentMethodDetails = generator.generate(processPaymentProcessCommand);
 
     return new Payment(
-        processPaymentCommand.getIdempotencyKey(),
+        processPaymentProcessCommand.getIdempotencyKey(),
         status,
-        processPaymentCommand.getCashAmount(),
-        processPaymentCommand.getPaymentMethodType(),
+        processPaymentProcessCommand.getCashAmount(),
+        processPaymentProcessCommand.getPaymentMethodType(),
         paymentMethodDetails
     );
   }

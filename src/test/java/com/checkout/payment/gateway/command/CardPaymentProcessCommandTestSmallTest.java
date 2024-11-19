@@ -14,7 +14,7 @@ import java.util.UUID;
 import com.checkout.payment.gateway.model.PaymentMethodType;
 import org.junit.jupiter.api.Test;
 
-class CardPaymentCommandSmallTest {
+class CardPaymentProcessCommandTestSmallTest {
 
   @Test
   void createCardProcessPaymentCommand_valid_success() throws ExpiredCardDateException {
@@ -22,7 +22,7 @@ class CardPaymentCommandSmallTest {
     UUID expectedIdempotencyKey = UUID.randomUUID();
     System.out.println("UUID " + UUID.randomUUID());
     CashAmount expectedCashAmount = new CashAmount(Currency.getInstance("GBP"), 150);
-    CardProcessPaymentCommand expectedCardProcessPaymentCommand = new CardProcessPaymentCommand(
+    CardPaymentProcessCommand expectedCardProcessPaymentCommand = new CardPaymentProcessCommand(
         expectedIdempotencyKey,
         expectedCashAmount, PaymentMethodType.CARD, 12345L, 10, 2025, 500);
     //Then
@@ -43,7 +43,7 @@ class CardPaymentCommandSmallTest {
     UUID expectedIdempotencyKey = UUID.randomUUID();
     CashAmount expectedCashAmount = new CashAmount(Currency.getInstance("GBP"), 150);
     assertThrows(ExpiredCardDateException.class,
-        () -> new CardProcessPaymentCommand(expectedIdempotencyKey,
+        () -> new CardPaymentProcessCommand(expectedIdempotencyKey,
             expectedCashAmount, PaymentMethodType.CARD, 12345L, 10, 2022, 500));
   }
 

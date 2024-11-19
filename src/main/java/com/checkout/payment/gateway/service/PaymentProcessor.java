@@ -1,8 +1,8 @@
 package com.checkout.payment.gateway.service;
 
-import com.checkout.payment.gateway.command.PaymentCommand;
+import com.checkout.payment.gateway.command.PaymentProcessCommand;
 import com.checkout.payment.gateway.model.Payment;
 
-public interface PaymentProcessor<T extends PaymentCommand> {
+public interface PaymentProcessor<T extends PaymentProcessCommand> {
   Payment processPayment(T paymentCommand);
 }

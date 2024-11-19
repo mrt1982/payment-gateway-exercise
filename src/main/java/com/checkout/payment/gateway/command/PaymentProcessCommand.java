@@ -4,12 +4,12 @@ import com.checkout.payment.gateway.model.CashAmount;
 import com.checkout.payment.gateway.model.PaymentMethodType;
 import java.util.UUID;
 
-public abstract class PaymentCommand {
+public abstract class PaymentProcessCommand {
   protected final UUID idempotencyKey;
   protected final CashAmount cashAmount;
   protected final PaymentMethodType paymentMethodType;
 
-  protected PaymentCommand(UUID idempotencyKey, CashAmount cashAmount, PaymentMethodType paymentMethodType) {
+  protected PaymentProcessCommand(UUID idempotencyKey, CashAmount cashAmount, PaymentMethodType paymentMethodType) {
     this.idempotencyKey = idempotencyKey;
     this.cashAmount = cashAmount;
     this.paymentMethodType = paymentMethodType;

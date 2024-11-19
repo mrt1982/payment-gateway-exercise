@@ -10,14 +10,14 @@ import java.util.UUID;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
-public class CardProcessPaymentCommand extends PaymentCommand {
+public class CardPaymentProcessCommand extends PaymentProcessCommand {
   private final long cardNumber;
   private final int expiryMonth;
   private final int expiryYear;
   private final int cvv;
 
-  public CardProcessPaymentCommand(UUID idempotencyKey, CashAmount cashAmount, PaymentMethodType paymentMethodType, long cardNumber,
-      int expiryMonth, int expiryYear, int cvv) throws ExpiredCardDateException {
+  public CardPaymentProcessCommand(UUID idempotencyKey, CashAmount cashAmount, PaymentMethodType paymentMethodType, long cardNumber,
+                                          int expiryMonth, int expiryYear, int cvv) throws ExpiredCardDateException {
     super(idempotencyKey, cashAmount, paymentMethodType);
     validateExpiryDate(expiryYear, expiryMonth);
     this.cardNumber = cardNumber;

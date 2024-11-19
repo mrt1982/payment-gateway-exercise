@@ -1,7 +1,10 @@
 package com.checkout.payment;
 
 import com.checkout.payment.application.PaymentGatewayApplication;
+import com.checkout.payment.rest.v1.response.PaymentResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.AfterAll;

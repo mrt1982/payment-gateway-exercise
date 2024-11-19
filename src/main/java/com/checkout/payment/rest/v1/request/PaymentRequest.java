@@ -1,9 +1,14 @@
 package com.checkout.payment.rest.v1.request;
 
+import com.checkout.payment.gateway.model.PaymentMethodType;
 import com.checkout.payment.rest.v1.validator.ValidCurrencyIso;
 import com.checkout.payment.rest.v1.validator.ValidExpiryMonthSize;
 import com.checkout.payment.rest.v1.validator.ValidExpiryYearSize;
+import com.checkout.payment.rest.v1.validator.ValueOfEnum;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,61 +20,40 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
-@Builder
+@SuperBuilder
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@NotNull(message = "PaymentRequest is required")
-public class PaymentRequest implements Serializable {
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "paymentMethodType", visible = true)
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = CardPaymentRequest.class, name = "CARD")
+})
+public abstract class PaymentRequest implements Serializable {
   @NotNull(message = "idempotencyKey is required")
   @Pattern(
       regexp = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
       message = "Invalid idempotencyKey UUID format"
   )
-  private String idempotencyKey;
+  protected String idempotencyKey;
 
-  @JsonProperty("card_number")
-  @Size(min = 14, max = 19, message = "Card number must be between 14 and 19 characters")
-  @Pattern(regexp = "\\d+", message = "Card number must only contain numeric characters")
-  @NotNull(message = "Card Number is required")
-  private String cardNumber;
-
-  @JsonProperty("expiry_month")
-  @NotNull(message = "Expiry Month is required")
-  @ValidExpiryMonthSize
-  private Integer expiryMonth;
-
-  @JsonProperty("expiry_year")
-  @NotNull(message = "Expiry Year is required")
-  @ValidExpiryYearSize
-  private Integer expiryYear;
+  @NotNull(message = "Payment Method Type is required")
+  @ValueOfEnum(enumClass = PaymentMethodType.class, message = "Invalid Payment Method type")
+  protected String paymentMethodType;
 
   @NotNull(message = "Currency is required")
   @NotBlank(message = "Currency cannot be empty")
   @Size(min = 3, max = 3, message = "Currency number must be 3 in size")
   @ValidCurrencyIso
-  private String currency;
+  protected String currency;
 
   @NotNull(message = "Amount is required")
   @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "Amount must be a numeric integer with no decimal places")
-  private String amount;
+  protected String amount;
 
-  @NotNull(message = "CVV is required")
-  @Pattern(regexp = "\\d+", message = "CVV must only contain numeric characters")
-  @Size(min = 3, max = 4, message = "CVV must be between 3 and 4 characters")
-  private String cvv;
-
-  @Override
-  public String toString() {
-    return "PaymentRequest{" +
-        "idempotencyKey=" + idempotencyKey +
-        "cardNumber=" + cardNumber.substring(cardNumber.length()- 4) +
-        ", expiryMonth=" + expiryMonth +
-        ", expiryYear=" + expiryYear +
-        ", currency='" + currency + '\'' +
-        ", amount=" + amount +
-        '}';
+  public PaymentMethodType toPaymentMethodType() {
+    return PaymentMethodType.valueOf(paymentMethodType);
   }
 }

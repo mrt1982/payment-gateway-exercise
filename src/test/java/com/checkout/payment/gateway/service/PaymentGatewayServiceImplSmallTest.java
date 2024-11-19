@@ -10,7 +10,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.checkout.payment.gateway.command.CardProcessPaymentCommand;
+import com.checkout.payment.gateway.command.CardPaymentProcessCommand;
 import com.checkout.payment.gateway.command.exception.ExpiredCardDateException;
 import com.checkout.payment.gateway.factory.paymentprocessor.PaymentProcessorFactory;
 import com.checkout.payment.gateway.model.CashAmount;
@@ -35,7 +35,7 @@ class PaymentGatewayServiceImplSmallTest {
   @Mock
   private PaymentProcessorFactory paymentProcessorFactoryMock;
   @Mock
-  private PaymentProcessor<CardProcessPaymentCommand> cardPaymentProcessorPaymentProcessorMock;
+  private PaymentProcessor<CardPaymentProcessCommand> cardPaymentProcessorPaymentProcessorMock;
 
   private PaymentGatewayService testObj;
 
@@ -103,7 +103,7 @@ class PaymentGatewayServiceImplSmallTest {
     //Given
     UUID idempotencyKey = UUID.randomUUID();
     when(paymentsRepositoryMock.getByIdempotencyKey(idempotencyKey)).thenReturn(Optional.empty());
-    CardProcessPaymentCommand processPaymentCommand = new CardProcessPaymentCommand(idempotencyKey, new CashAmount(
+    CardPaymentProcessCommand processPaymentCommand = new CardPaymentProcessCommand(idempotencyKey, new CashAmount(
         Currency.getInstance("GBP"), 2025), PaymentMethodType.CARD, 123L, 10, 2025, 0);
     Payment payment = new Payment(idempotencyKey,null,null,null,null);
     PaymentMethodType paymentMethodType = PaymentMethodType.CARD;
@@ -126,7 +126,7 @@ class PaymentGatewayServiceImplSmallTest {
     UUID idempotencyKey = UUID.randomUUID();
     Payment existingPayment = new Payment(idempotencyKey, null, null, PaymentMethodType.CARD,null);
     when(paymentsRepositoryMock.getByIdempotencyKey(idempotencyKey)).thenReturn(Optional.of(existingPayment));
-    CardProcessPaymentCommand processPaymentCommand = new CardProcessPaymentCommand(idempotencyKey, null, PaymentMethodType.CARD,123L, 10, 2025, 0);
+    CardPaymentProcessCommand processPaymentCommand = new CardPaymentProcessCommand(idempotencyKey, null, PaymentMethodType.CARD,123L, 10, 2025, 0);
     //When & Then
     assertThrows(PaymentAlreadyProcessedException.class, () -> testObj.processPayment(processPaymentCommand));
   }
